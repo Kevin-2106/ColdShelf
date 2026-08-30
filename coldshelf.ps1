@@ -1176,7 +1176,13 @@ function Test-ColdShelfArchiveData {
         Stop-ColdShelf -Code $script:ExitCodes.Integrity -Message 'Metadata is missing id or name.'
     }
 
-    $archiveFile = Join-Path $ArchiveDirectory ([string]$Metadata.archiveFile)
+    $archiveName = [string]$Metadata.archiveFile
+    $manifestName = [string](Get-ObjectPropertyValue -Object $Metadata -Name 'manifestFile' -Default 'manifest.json')
+    if (-not [string]::Equals($archiveName, 'archive.tar', [System.StringComparison]::Ordinal) -or
+        -not [string]::Equals($manifestName, 'manifest.json', [System.StringComparison]::Ordinal)) {
+        Stop-ColdShelf -Code $script:ExitCodes.Integrity -Message 'Archive metadata contains an unsupported payload filename.'
+    }
+    $archiveFile = Join-Path $ArchiveDirectory $archiveName
     if (-not (Test-Path -LiteralPath $archiveFile -PathType Leaf)) {
         Stop-ColdShelf -Code $script:ExitCodes.Integrity -Message "Archive file is missing: $archiveFile"
     }
@@ -1188,7 +1194,8 @@ function Test-ColdShelfArchiveData {
     $tar = Get-ColdShelfTarPath
     $listing = Invoke-NativeProcess `
         -FilePath $tar `
-        -Arguments @('-tf', $archiveFile) `
+        -Arguments @('-tf', $archiveName) `
+        -WorkingDirectory $ArchiveDirectory `
         -FailureCode $script:ExitCodes.Integrity
     if ($listing.ExitCode -ne 0) {
         $detail = $listing.StdErr.Trim()
@@ -1197,7 +1204,7 @@ function Test-ColdShelfArchiveData {
     $headerEntries = Get-RawTarEntries -ArchivePath $archiveFile
     $entries = @(Test-TarEntrySafety -Entries $headerEntries -ExpectedRoot ([string]$Metadata.name))
 
-    $manifestPath = Join-Path $ArchiveDirectory ([string](Get-ObjectPropertyValue -Object $Metadata -Name 'manifestFile' -Default 'manifest.json'))
+    $manifestPath = Join-Path $ArchiveDirectory $manifestName
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
         Stop-ColdShelf -Code $script:ExitCodes.Integrity -Message "Content manifest is missing: $manifestPath"
     }
@@ -1698,7 +1705,7 @@ function Invoke-ColdOperation {
     $sourceRemovalCommitted = $false
     try {
         $tar = Get-ColdShelfTarPath
-        $result = Invoke-NativeProcess -FilePath $tar -Arguments @('-cf', $archivePath, '-C', $parent, '--', $name)
+        $result = Invoke-NativeProcess -FilePath $tar -Arguments @('-cf', 'archive.tar', '-C', $parent, '--', $name) -WorkingDirectory $tempDirectory
         $tarCompleted = [DateTimeOffset]::Now
         if ($result.ExitCode -ne 0) {
             $detail = $result.StdErr.Trim()
@@ -2149,7 +2156,7 @@ function Invoke-HotOperation {
             Write-ColdShelfMessage 'Temporary Defender exclusions are active.'
         }
         $tar = Get-ColdShelfTarPath
-        $result = Invoke-NativeProcess -FilePath $tar -Arguments @('-xf', $verification.ArchivePath, '-C', $staging)
+        $result = Invoke-NativeProcess -FilePath $tar -Arguments @('-xf', 'archive.tar', '-C', $staging) -WorkingDirectory $archive.ArchiveDirectory
         $restoreCompleted = [DateTimeOffset]::Now
         if ($result.ExitCode -ne 0) {
             Stop-ColdShelf -Code $script:ExitCodes.Tar -Message "tar extraction failed (exit $($result.ExitCode)): $($result.StdErr.Trim())"
