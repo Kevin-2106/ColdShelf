@@ -2,6 +2,8 @@
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$script:Utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = $script:Utf8NoBom
 
 $script:ExitCodes = @{
     Success   = 0

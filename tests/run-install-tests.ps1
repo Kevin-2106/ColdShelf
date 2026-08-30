@@ -68,6 +68,8 @@ function Invoke-Process {
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
+    $psi.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
+    $psi.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
     $psi.CreateNoWindow = $true
     $psi.WorkingDirectory = $WorkingDirectory
     foreach ($argument in $Arguments) { [void]$psi.ArgumentList.Add($argument) }

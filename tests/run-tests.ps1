@@ -167,6 +167,8 @@ function Invoke-ColdShelf {
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
+    $psi.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
+    $psi.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
     $psi.CreateNoWindow = $true
     $psi.WorkingDirectory = $script:WorkRoot
 
@@ -222,6 +224,8 @@ function Invoke-ColdShelfFromLocation {
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
+    $psi.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
+    $psi.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
     $psi.CreateNoWindow = $true
     $psi.WorkingDirectory = $env:USERPROFILE
     foreach ($argument in @('-NoLogo', '-NoProfile', '-NonInteractive', '-Command', 'Set-Location -LiteralPath $env:COLDSHELF_TEST_LOCATION; $invokeArguments = @($env:COLDSHELF_TEST_ARGUMENTS_JSON | ConvertFrom-Json); & $env:COLDSHELF_TEST_CLI @invokeArguments; exit $LASTEXITCODE')) {
