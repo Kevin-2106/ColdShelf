@@ -1,0 +1,41 @@
+# ColdShelf 本地状态与归档数据
+.coldshelf/
+ColdShelfStore/
+archives/
+*.tar
+*.tar.tmp
+
+# 测试和临时产物
+.tmp/
+tmp/
+temp/
+TestResults/
+*.tmp
+*.temp
+*.log
+
+# PowerShell / 测试覆盖率
+coverage/
+*.clixml
+
+# 安装器和本地环境文件
+install-state.json
+.env
+.env.*
+
+# 编辑器与 IDE
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+*~
+
+# Windows / macOS
+Thumbs.db
+Desktop.ini
+.DS_Store
+$RECYCLE.BIN/
+
+# ZCode 本地工作文件
+.zcode/

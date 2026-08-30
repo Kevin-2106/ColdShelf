@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Parse PowerShell files
+        shell: pwsh
+        run: |
+          $files = @(
+            'coldshelf.ps1'
+            'install.ps1'
+            'uninstall.ps1'
+            'tests/run-tests.ps1'
+            'tests/run-install-tests.ps1'
+          )
+          $failed = $false
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path -LiteralPath $file),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $failed = $true
+              foreach ($error in $errors) {
+                Write-Error ("{0}:{1}: {2}" -f $file, $error.Extent.StartLineNumber, $error.Message)
+              }
+            }
+          }
+          if ($failed) { exit 1 }
+
+      - name: Run core regression tests
+        shell: pwsh
+        run: ./tests/run-tests.ps1
+
+      - name: Run installer regression tests
+        shell: pwsh
+        run: ./tests/run-install-tests.ps1
